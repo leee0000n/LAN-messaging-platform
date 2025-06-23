@@ -1,0 +1,1 @@
+rootProject.name = "Local_Messaging_Platform"
