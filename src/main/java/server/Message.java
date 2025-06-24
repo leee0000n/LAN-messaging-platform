@@ -3,9 +3,9 @@ package server;
 import java.util.Date;
 
 public class Message {
-    private String message;
-    private String senderName;
-    private Date date;
+    private final String message;
+    private final String senderName;
+    private final Date date;
 
     public Message(String senderName, String message) {
         this.message = message;
@@ -14,7 +14,7 @@ public class Message {
     }
 
     public String getMessage() {
-        return senderName + " [" + date.toString() + "] : " + message;
+        return senderName + " [" + date + "] : " + message;
     }
 
     public String getSenderName() {

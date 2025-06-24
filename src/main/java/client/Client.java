@@ -2,7 +2,6 @@ package client;
 
 import java.io.*;
 import java.net.*;
-import java.util.Objects;
 import java.util.Scanner;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -12,7 +11,7 @@ public class Client {
     private static DataOutputStream dos;
     private static DataInputStream dis;
 
-    private static AtomicBoolean clientConnected = new AtomicBoolean(false);
+    private final static AtomicBoolean clientConnected = new AtomicBoolean(false);
 
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
@@ -35,7 +34,7 @@ public class Client {
             dis = new DataInputStream(socket.getInputStream());
         }
         catch (IOException e) {
-            e.printStackTrace();
+            System.err.println("I/O Exception: " + e.getMessage());
             return;
         }
 
@@ -46,26 +45,30 @@ public class Client {
         Thread inputThread = new Thread(() -> {
             try {
                 while (clientConnected.get()) {
-                    System.out.println(dis.readUTF());
+                    System.out.println("\r" + dis.readUTF());
+                    System.out.print(" > ");
                 }
             }
             catch (IOException e) {
-                e.printStackTrace();
+                System.err.println("I/O Exception: " + e.getMessage());
             }
         });
 
-        while (clientConnected.get()) {
-            if (!scanner.hasNext()) continue;
+        inputThread.start();
 
-            System.out.print(" >> ");
-            String message = scanner.nextLine();
-            System.out.println("\n");
-            if (message.equalsIgnoreCase("quit")) {
+        while (clientConnected.get()) {
+            String message;
+
+            System.out.print(" > ");
+
+            message = scanner.nextLine();
+
+            if ("quit".equalsIgnoreCase(message)) {
                 System.out.println("Bye!");
                 break;
             }
 
-            writeToDataOutput(message);
+            if (!writeToDataOutput(message)) System.err.println("Failed to send message");
         }
 
         scanner.close();
@@ -141,6 +144,8 @@ public class Client {
     }
 
     private static boolean writeToDataOutput(String outputStr) {
+        if (outputStr == null) return false;
+
         try {
             dos.writeUTF(outputStr);
             dos.flush();
@@ -160,7 +165,7 @@ public class Client {
             dis.close();
         }
         catch (IOException e) {
-            e.printStackTrace();
+            System.err.println("I/O error: " + e.getMessage());
         }
     }
 }

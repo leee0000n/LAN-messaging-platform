@@ -15,11 +15,8 @@ Send/receive messages → Via Input/Output streams.
 Close connections when done.
  */
 
-import client.Client;
-
 import java.io.*;
 import java.net.*;
-import java.util.ArrayList;
 import java.util.Scanner;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -33,22 +30,16 @@ public class Server {
     private static ServerSocket serverSocket;
 
     /**
-     * Max time to block for when connecting to client
-     */
-    private final static int ACCEPT_MAX_WAIT_TIME = 10000;
-
-    /**
      * List of all clients, their data and threads
      */
-    private static CopyOnWriteArrayList<ClientThread> clientThreads = new CopyOnWriteArrayList<>();
+    private final static CopyOnWriteArrayList<ClientThread> clientThreads = new CopyOnWriteArrayList<>();
 
     /**
      * Buffer of all messages to broadcast to others
      */
     private static volatile ConcurrentLinkedDeque<Message> messagesToBroadcast = new ConcurrentLinkedDeque<>();
 
-    private static volatile String consoleInput = null;
-    private static AtomicBoolean serverRunning = new AtomicBoolean(false);
+    private final static AtomicBoolean serverRunning = new AtomicBoolean(false);
 
     public static void main(String[] args) {
         System.out.println("Starting Server");
@@ -89,7 +80,7 @@ public class Server {
                     System.out.println("<System Info>: New Client, " + name + ", Connected");
                 }
                 catch (IOException e) {
-                    e.printStackTrace();
+                    System.err.println("I/O Exception: " + e.getMessage());
                 }
             }
         });
@@ -108,7 +99,7 @@ public class Server {
                     for (ClientThread client : clientThreads) {
 
                         // If client name matches current client, skip
-                        if (!client.compareNames(clientName)) continue;
+                        if (client.compareNames(clientName)) continue;
 
                         client.addMessage(message);
                     }
@@ -126,7 +117,7 @@ public class Server {
             String message = input.nextLine();
 
             if (message != null) {
-                if (message.equals("stop")) {
+                if (message.equalsIgnoreCase("stop")) {
                     serverRunning.set(false);
                 }
             }
@@ -173,8 +164,9 @@ public class Server {
      *  - freeing the port used
      */
     private static void closeServer() {
-        // TODO: Free all open sockets
-
+        for (ClientThread client : clientThreads) {
+            client.close();
+        }
 
         // Close server socket
         try {
@@ -182,23 +174,21 @@ public class Server {
             serverSocket = null;
         }
         catch (IOException e) {
-            e.printStackTrace();
+            System.err.println("I/O Exception: " + e.getMessage());
         }
-
-        // TODO: Clean up other resources
     }
 }
 
 class ClientThread extends Thread {
-    private String clientName;
+    private final String clientName;
 
-    private AtomicBoolean running;
-    private Socket clientSocket;
+    private final AtomicBoolean running;
+    private final Socket clientSocket;
 
-    private DataInputStream dis;
-    private DataOutputStream dos;
+    private final DataInputStream dis;
+    private final DataOutputStream dos;
 
-    private ConcurrentLinkedDeque<Message> messagesToSend;
+    private final ConcurrentLinkedDeque<Message> messagesToSend;
 
     /**
      * Initialise client thread with all relevant data. Creates a
@@ -263,7 +253,7 @@ class ClientThread extends Thread {
             dos.flush();
         }
         catch (IOException e) {
-            e.printStackTrace();
+            System.err.println("I/O Exception in ClientThread: " + e.getMessage());
         }
     }
 
