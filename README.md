@@ -1,5 +1,6 @@
 # LAN-messaging-platform
-A console messaging platform that works over LAN. Made in Java 
+A simple TCP console-based messaging platform that works over a Local Area Network (LAN), built in Java.  
+This is a small learning project focused on understanding how LAN communication and basic client-server networking works in Java.
 
 ## How to use
 To start the server, use `./gradlew.bat server --args "<port>"` replacing <port> with a valid port number
