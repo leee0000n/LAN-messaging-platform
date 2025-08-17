@@ -1,26 +1,13 @@
 package server;
 
-/*
-✅ 2. Server Responsibilities
-Create a Server Socket → Binds to a specific port on your machine.
-
-Listen for client connections (infinite or limited loop).
-
-Accept a client → Creates a Socket specific to that connection.
-
-Handle communication → Usually on a new thread per client (so multiple clients can connect).
-
-Send/receive messages → Via Input/Output streams.
-
-Close connections when done.
- */
-
 import java.io.*;
 import java.net.*;
 import java.util.Scanner;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import message.Message;
 
 public class Server {
 
@@ -101,7 +88,7 @@ public class Server {
                         // If client name matches current client, skip
                         if (client.compareNames(clientName)) continue;
 
-                        client.addMessage(message);
+                        client.sendMessage(message);
                     }
                 }
 
@@ -188,8 +175,6 @@ class ClientThread extends Thread {
     private final DataInputStream dis;
     private final DataOutputStream dos;
 
-    private final ConcurrentLinkedDeque<Message> messagesToSend;
-
     /**
      * Initialise client thread with all relevant data. Creates a
      * DataInputStream object
@@ -205,8 +190,6 @@ class ClientThread extends Thread {
         this.clientName = name;
         this.clientSocket = clientSocket;
 
-        this.messagesToSend = new ConcurrentLinkedDeque<>();
-
         this.dis = dis;
         this.dos = dos;
     }
@@ -220,16 +203,6 @@ class ClientThread extends Thread {
             while (running.get()) {
                 String clientMessage = dis.readUTF();
                 Server.addMessageToBroadcast(new Message(clientName, clientMessage));
-
-                // Send messages if there are any in arraylist
-                if (!messagesToSend.isEmpty()) {
-                    for (Message message : messagesToSend) {
-                        sendMessage(message);
-                    }
-
-                    // Clear messages since they are all sentM
-                    messagesToSend.clear();
-                }
             }
         }
         catch (EOFException e) {
@@ -247,7 +220,7 @@ class ClientThread extends Thread {
      * Send message to client
      * @param message message to send
      */
-    private void sendMessage(Message message) {
+    public void sendMessage(Message message) {
         try {
             dos.writeUTF(message.getMessage());
             dos.flush();
@@ -255,15 +228,6 @@ class ClientThread extends Thread {
         catch (IOException e) {
             System.err.println("I/O Exception in ClientThread: " + e.getMessage());
         }
-    }
-
-    /**
-     * Add a message to list of messages to send
-     * @param message message to send
-     */
-    public synchronized void addMessage(Message message) {
-        if (message == null) System.err.println("Message is null");
-        messagesToSend.add(message);
     }
 
     public boolean compareNames(String name) {

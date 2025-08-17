@@ -16,7 +16,7 @@ dependencies {
 }
 
 application {
-    mainClass = "org.example.Main"; // <- For Java, not MainKt
+    mainClass = "testbed.TestBed" // <- For Java, not MainKt
 }
 
 // 👇 Define your 'server' task
